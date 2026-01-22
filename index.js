@@ -39,7 +39,13 @@ const client = new Client({
 
 client.on('qr', (qr) => {
     console.log('📱 SCANNE CE QR CODE :');
-    qrcode.generate(qr, { small: true });
+    // En local: affiche le QR en ASCII
+    if (process.env.NODE_ENV !== 'production') {
+        qrcode.generate(qr, { small: true });
+    }
+    // Pour Railway: affiche un lien pour générer le QR
+    console.log('🔗 Ou ouvre ce lien pour voir le QR :');
+    console.log(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`);
 });
 
 client.on('authenticated', () => console.log('✅ Authentifié!'));
