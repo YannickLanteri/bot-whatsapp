@@ -36,6 +36,8 @@ const client = new Client({
             '--no-first-run',
             '--no-zygote',
             '--disable-gpu',
+            '--disable-software-rasterizer',
+            '--disable-extensions',
             '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         ]
     }
@@ -175,25 +177,35 @@ const shutdown = async (signal) => {
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-// Fonction pour nettoyer les verrous Chromium (Railway/Docker persistence fix)
-const cleanupLocks = () => {
-    const sessionDir = path.join(__dirname, '.wwebjs_auth', 'session');
-    if (fs.existsSync(sessionDir)) {
-        const lockFiles = ['SingletonLock', 'SingletonCookie', 'SingletonSocket'];
-        lockFiles.forEach(file => {
-            const lockPath = path.join(sessionDir, file);
-            if (fs.existsSync(lockPath)) {
+// Fonction pour nettoyer les verrous Chromium récursivement
+const cleanupLocks = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    try {
+        const files = fs.readdirSync(dir);
+        for (const file of files) {
+            const fullPath = path.join(dir, file);
+            if (fs.lstatSync(fullPath).isDirectory()) {
+                cleanupLocks(fullPath);
+            } else if (file === 'SingletonLock' || file === 'SingletonCookie' || file === 'SingletonSocket') {
                 try {
-                    fs.unlinkSync(lockPath);
-                    console.log(`🧹 [SYS] Verrou supprimé : ${file}`);
+                    fs.unlinkSync(fullPath);
+                    console.log(`🧹 [SYS] Verrou supprimé : ${fullPath}`);
                 } catch (e) {
                     console.error(`⚠️ [SYS] Impossible de supprimer ${file} :`, e.message);
                 }
             }
-        });
+        }
+    } catch (err) {
+        console.error('⚠️ [SYS] Erreur lors du parcours des dossiers :', err.message);
     }
 };
 
-console.log('🤖 [BOT] Nettoyage des verrous et démarrage...');
-cleanupLocks();
+console.log('🤖 [BOT] Nettoyage profond des verrous et démarrage...');
+const authPath = path.join(__dirname, '.wwebjs_auth');
+if (fs.existsSync(authPath)) {
+    cleanupLocks(authPath);
+} else {
+    console.log('📂 [SYS] Dossier auth non trouvé, démarrage propre.');
+}
+
 client.initialize();
