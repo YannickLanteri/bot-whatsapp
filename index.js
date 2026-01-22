@@ -2,6 +2,8 @@ require('dotenv').config();
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const { GoogleGenAI } = require('@google/genai');
+const fs = require('fs');
+const path = require('path');
 
 // Initialisation Gemini (nouveau SDK)
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -173,5 +175,25 @@ const shutdown = async (signal) => {
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-console.log('🤖 [BOT] Démarrage de l\'initialisation...');
+// Fonction pour nettoyer les verrous Chromium (Railway/Docker persistence fix)
+const cleanupLocks = () => {
+    const sessionDir = path.join(__dirname, '.wwebjs_auth', 'session');
+    if (fs.existsSync(sessionDir)) {
+        const lockFiles = ['SingletonLock', 'SingletonCookie', 'SingletonSocket'];
+        lockFiles.forEach(file => {
+            const lockPath = path.join(sessionDir, file);
+            if (fs.existsSync(lockPath)) {
+                try {
+                    fs.unlinkSync(lockPath);
+                    console.log(`🧹 [SYS] Verrou supprimé : ${file}`);
+                } catch (e) {
+                    console.error(`⚠️ [SYS] Impossible de supprimer ${file} :`, e.message);
+                }
+            }
+        });
+    }
+};
+
+console.log('🤖 [BOT] Nettoyage des verrous et démarrage...');
+cleanupLocks();
 client.initialize();
