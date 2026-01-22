@@ -1,4 +1,4 @@
-# 🤖 WhatsApp Gemini Voice Assistant 🚀
+# 🤖 WhatsApp Gemini Voice Assistant 🚀✨
 
 ![Banner](./banner.png)
 
