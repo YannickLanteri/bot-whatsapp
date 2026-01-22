@@ -76,7 +76,7 @@ client.on('message', async (msg) => {
         // Message vocal
         if (msg.hasMedia && (msg.type === 'audio' || msg.type === 'ptt')) {
             console.log('🎤 Vocal...');
-            await client.sendMessage(msg.from, '⏳ Analyse...', { sendSeen: false });
+            await client.sendMessage(msg.from, '⏳ Analyse en cours...', { sendSeen: false });
             
             const media = await msg.downloadMedia();
             if (!media) {
@@ -84,11 +84,39 @@ client.on('message', async (msg) => {
                 return;
             }
 
-            // Nouveau SDK Gemini
+            // Prompt optimisé en anglais pour précision
+            const prompt = `Analyze this voice note.
+
+Create a high-quality summary in FRENCH.
+
+If the audio is long (more than 1 minute), provide a minute-by-minute timeline.
+
+Extract key takeaways and action items.
+
+Format your response EXACTLY like this (keep the emojis and structure):
+
+📌 RÉSUMÉ :
+(One sentence synthesis of the entire message)
+
+⏳ CHRONOLOGIE :
+• [0:00 - 1:00] : ...
+• [1:00 - 2:00] : ...
+(Skip this section if audio is less than 1 minute)
+
+💡 POINTS CLÉS :
+• Point 1
+• Point 2
+• Point 3
+
+✅ ACTIONS :
+• Action item 1
+• Action item 2
+(Skip this section if no action items)`;
+
             const response = await ai.models.generateContent({
                 model: "gemini-2.0-flash",
                 contents: [
-                    { text: "Transcris ce vocal et fais un résumé court et stylé avec emojis." },
+                    { text: prompt },
                     { 
                         inlineData: { 
                             data: media.data, 
@@ -98,7 +126,16 @@ client.on('message', async (msg) => {
                 ]
             });
 
-            await client.sendMessage(msg.from, `📝 *Résumé:*\n\n${response.text}`, { sendSeen: false });
+            // Formatage beauté WhatsApp
+            const formattedResponse = `┏━━━━━━━━━━━━━━━━┓
+   🎤 *ANALYSE VOCALE*
+┗━━━━━━━━━━━━━━━━┛
+
+${response.text}
+
+━━━━━━━━━━━━━━━━━━`;
+
+            await client.sendMessage(msg.from, formattedResponse, { sendSeen: false });
             console.log('✅ Résumé envoyé');
         }
     } catch (error) {
