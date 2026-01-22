@@ -40,23 +40,32 @@ const client = new Client({
 });
 
 client.on('qr', (qr) => {
-    console.log('📱 SCANNE CE QR CODE :');
+    console.log('📱 [QR] NOUVEAU QR CODE GÉNÉRÉ');
     // En local: affiche le QR en ASCII
     if (process.env.NODE_ENV !== 'production') {
         qrcode.generate(qr, { small: true });
     }
     // Pour Railway: affiche un lien pour générer le QR
-    console.log('🔗 Ou ouvre ce lien pour voir le QR :');
+    console.log('🔗 SCANNE CE LIEN POUR TE CONNECTER :');
     console.log(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`);
 });
 
-client.on('authenticated', () => console.log('✅ Authentifié!'));
-client.on('auth_failure', (msg) => console.error('❌ Auth fail:', msg));
-client.on('ready', () => {
-    console.log('🚀 Bot prêt!');
-    console.log(`📋 Whitelist: ${WHITELISTED_NUMBERS.map(n => n + '@c.us').join(', ')}`);
+client.on('authenticated', () => {
+    console.log('✅ [AUTH] Authentifié avec succès !');
 });
-client.on('disconnected', (reason) => console.log('🔌 Déconnecté:', reason));
+
+client.on('auth_failure', (msg) => {
+    console.error('❌ [AUTH] Échec de l\'authentification :', msg);
+});
+
+client.on('ready', () => {
+    console.log('🚀 [BOT] Prêt et connecté !');
+    console.log(`📋 Whitelist active pour: ${WHITELISTED_NUMBERS.join(', ')}`);
+});
+
+client.on('disconnected', (reason) => {
+    console.log('🔌 [BOT] Déconnecté de WhatsApp :', reason);
+});
 
 client.on('message', async (msg) => {
     console.log(`📨 ${msg.from}: "${msg.body}"`);
@@ -145,9 +154,24 @@ ${response.text}
     }
 });
 
-process.on('unhandledRejection', (r) => console.error('⚠️', r));
-process.on('uncaughtException', (e) => console.error('⚠️', e.message));
-process.on('SIGINT', async () => { await client.destroy(); process.exit(0); });
+process.on('unhandledRejection', (r) => console.error('⚠️ [ERREUR] Rejet non géré :', r));
+process.on('uncaughtException', (e) => console.error('⚠️ [ERREUR] Exception non gérée :', e.message));
 
-console.log('🤖 Démarrage...');
+// Nettoyage propre au signal d'arrêt (Railway)
+const shutdown = async (signal) => {
+    console.log(`🔌 [SYS] Signal ${signal} reçu. Fermeture du bot...`);
+    try {
+        await client.destroy();
+        console.log('✅ [SYS] Bot fermé proprement.');
+        process.exit(0);
+    } catch (err) {
+        console.error('❌ [SYS] Erreur lors de la fermeture :', err);
+        process.exit(1);
+    }
+};
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+console.log('🤖 [BOT] Démarrage de l\'initialisation...');
 client.initialize();
