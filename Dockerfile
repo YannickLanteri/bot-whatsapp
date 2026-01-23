@@ -32,12 +32,19 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci --omit=dev
+# Install all dependencies (including dev for build)
+RUN npm ci
 
-# Copy application code
-COPY . .
+# Copy source code
+COPY src ./src
+
+# Build TypeScript
+RUN npm run build
+
+# Remove dev dependencies after build
+RUN npm prune --omit=dev
 
 # Start the bot
 CMD ["npm", "start"]
