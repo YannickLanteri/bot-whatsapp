@@ -1,6 +1,7 @@
 import type { Command } from '../types';
 import { pingCommand } from './ping';
 import { helpCommand } from './help';
+import { detailsCommand } from './details';
 
 /**
  * Command registry
@@ -9,6 +10,7 @@ import { helpCommand } from './help';
 const commands: Command[] = [
   pingCommand,
   helpCommand,
+  detailsCommand,
 ];
 
 /**

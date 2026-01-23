@@ -22,7 +22,7 @@ describe('Ping Command', () => {
     expect(sendMessage).toHaveBeenCalledWith(
       '33612345678@c.us',
       'pong',
-      { sendSeen: false }
+      { sendSeen: true }
     );
   });
 });

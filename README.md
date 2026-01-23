@@ -1,57 +1,91 @@
-# 🤖 WhatsApp Gemini Voice Assistant 🚀✨
+# WhatsApp Gemini Voice Assistant
 
 ![Banner](./banner.png)
 
-A powerful WhatsApp bot built with **Node.js**, **whatsapp-web.js**, and **Google Gemini 3.0 Flash**. This bot listens to your voice notes, transcribes them, and provides a stylish summary with key takeaways and action items.
+A WhatsApp bot built with **TypeScript**, **whatsapp-web.js**, and **Google Gemini AI**. Listens to voice notes, transcribes them, and provides smart summaries based on duration.
 
-## 🚀 Features
+## Features
 
-- 🎤 **Voice Transcription**: Automatically transcribes any voice note sent by whitelisted numbers.
-- 📌 **Smart Summaries**: Provides a one-sentence synthesis, minute-by-minute timeline (for long audios), and key takeaways.
-- ✅ **Action Items**: Extracts tasks and action items from your voice messages.
-- 🔒 **Security First**: Whitelist-only mode. The bot ignores everyone except your specified numbers.
-- 🏓 **Ping-Pong**: A simple `!ping` command to check if the bot is alive.
+- **Adaptive Analysis**: Response adapts to voice message duration
+  - < 30s: Transcription only
+  - 30s - 2min: Short summary + key points
+  - \> 2min: Full summary + `!details` option
+- **Smart Summaries**: Key takeaways, action items, and timeline for long messages
+- **Whitelist Security**: Only responds to specified phone numbers
+- **Modular Architecture**: Easy to add new commands and handlers
 
-## 🛠️ Setup
+## Commands
 
-### 1. Prerequisites
-- A WhatsApp account (Physical phone with WhatsApp or WhatsApp Business).
-- A Google AI (Gemini) API Key. [Get one here](https://aistudio.google.com/).
-- A [Railway](https://railway.app/) account for hosting (optional but recommended).
+| Command | Description |
+|---------|-------------|
+| `!ping` | Health check |
+| `!help` | Show available commands |
+| `!details` | Get detailed analysis of last voice message |
 
-### 2. Environment Variables
-Create a `.env` file in the root directory:
+## Setup
+
+### Prerequisites
+- Node.js 18+
+- WhatsApp account
+- [Google Gemini API Key](https://aistudio.google.com/)
+
+### Environment Variables
+
+Create a `.env` file:
 ```env
 GEMINI_API_KEY=your_gemini_api_key
 WHITELISTED_NUMBERS=336xxxxxxxx,336yyyyyyyy
 ```
-*Note: Numbers should be in international format without the `+` sign (e.g., `33612345678` for a French number).*
+Numbers in international format without `+` (e.g., `33612345678` for France).
 
-### 3. Local Installation
+### Installation
+
 ```bash
 npm install
+npm run build
 npm start
 ```
-Scan the QR code that appears in your terminal. Your session will be saved in the `.wwebjs_auth` folder.
 
-## ☁️ Deployment on Railway
+### Development
 
-This project is optimized for Railway with **Persistent Volumes** to ensure you only scan the QR code once.
+```bash
+npm run dev:ts   # Run with hot reload
+npm test         # Run unit tests
+npm run test:coverage  # Run tests with coverage
+```
 
-1. **Push to GitHub**: Fork or push this repo to your private/public GitHub.
-2. **Create Railway Project**: Choose "Deploy from GitHub repo".
-3. **Configure Variables**: Add `GEMINI_API_KEY` and `WHITELISTED_NUMBERS` in the Railway dashboard.
-4. **Scan QR Code**: 
-   - Check the Railway deployment **Logs**.
-   - You will see a link like `https://api.qrserver.com/...`
-   - Open the link, scan the QR code with your phone.
-5. **Done!** The session is now saved in a persistent volume. The bot will stay online even after redeployments.
+## Project Structure
 
-## 📝 Performance Tips
-The bot uses `gemini-3-flash-preview` for the best balance between speed, cost, and high-quality audio analysis.
+```
+src/
+├── index.ts              # Entry point
+├── types/                # TypeScript types
+├── config/               # Configuration & whitelist
+├── client/               # WhatsApp client setup
+├── commands/             # Bot commands (ping, help, details)
+├── handlers/             # Media handlers (voice)
+└── services/             # Gemini AI, cache, cleanup
+```
 
-## 🛡️ Privacy & Security
-The bot is designed to be **private**. It will only respond to messages coming from the numbers listed in your `WHITELISTED_NUMBERS`.
+## Deployment (Railway)
+
+1. Push to GitHub
+2. Create Railway project from repo
+3. Add environment variables in dashboard
+4. Check logs for QR code link
+5. Scan QR code once - session persists via volume
+
+## Tech Stack
+
+- **Runtime**: Node.js 18+
+- **Language**: TypeScript
+- **WhatsApp**: whatsapp-web.js
+- **AI**: Google Gemini 2.0 Flash
+- **Testing**: Vitest
+
+## License
+
+MIT
 
 ---
-*Disclaimer: This project is not affiliated with WhatsApp or Google. Use responsibly.*
+*Not affiliated with WhatsApp or Google. Use responsibly.*

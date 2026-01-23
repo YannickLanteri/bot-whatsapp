@@ -1,6 +1,81 @@
 import { GoogleGenAI } from '@google/genai';
 import { config } from '../config';
 
+export type AnalysisType = 'transcription' | 'short' | 'full' | 'details';
+
+/**
+ * Duration thresholds in seconds
+ */
+export const DURATION_THRESHOLDS = {
+  SHORT: 30,    // < 30s = transcription only
+  MEDIUM: 120,  // 30s - 2min = short summary
+  // > 2min = full summary with !details option
+};
+
+const PROMPTS: Record<AnalysisType, string> = {
+  transcription: `Transcribe this voice note word for word in FRENCH.
+Keep the exact words spoken, with minimal formatting.
+Just return the transcription, nothing else.`,
+
+  short: `Analyze this voice note and create a SHORT summary in FRENCH.
+
+Format your response EXACTLY like this:
+
+*RESUME*
+(2-3 sentences maximum summarizing the key message)
+
+*POINTS CLES*
+• Point 1
+• Point 2
+• Point 3
+(maximum 3-4 points)`,
+
+  full: `Analyze this voice note and create a summary in FRENCH.
+
+Format your response EXACTLY like this:
+
+*RESUME*
+(One clear sentence summarizing the entire message)
+
+*POINTS CLES*
+• Point 1
+• Point 2
+• Point 3
+
+*ACTIONS*
+• Action 1
+• Action 2
+(Skip this section if no action items)
+
+Keep it concise. User can request more details with !details command.`,
+
+  details: `Analyze this voice note IN DEPTH in FRENCH.
+
+Format your response EXACTLY like this:
+
+*RESUME DETAILLE*
+(Detailed 3-4 sentence summary)
+
+*CHRONOLOGIE*
+[0:00 - 0:30] : ...
+[0:30 - 1:00] : ...
+[1:00 - 1:30] : ...
+(Continue for each 30-second segment)
+
+*POINTS CLES*
+• Point 1 - with explanation
+• Point 2 - with explanation
+• Point 3 - with explanation
+(Be thorough)
+
+*ACTIONS*
+• Action 1 - deadline/priority if mentioned
+• Action 2 - deadline/priority if mentioned
+
+*TRANSCRIPTION*
+(Full word-for-word transcription)`,
+};
+
 /**
  * Gemini AI service for audio analysis
  */
@@ -27,40 +102,31 @@ class GeminiService {
   }
 
   /**
-   * Analyze audio content and return a summary
+   * Determine analysis type based on duration
    */
-  async analyzeAudio(audioData: string, mimeType: string): Promise<string> {
+  getAnalysisType(durationSeconds: number): AnalysisType {
+    if (durationSeconds < DURATION_THRESHOLDS.SHORT) {
+      return 'transcription';
+    } else if (durationSeconds < DURATION_THRESHOLDS.MEDIUM) {
+      return 'short';
+    } else {
+      return 'full';
+    }
+  }
+
+  /**
+   * Analyze audio content with specified analysis type
+   */
+  async analyzeAudio(
+    audioData: string,
+    mimeType: string,
+    type: AnalysisType = 'full'
+  ): Promise<string> {
     if (!this.ai) {
       throw new Error('Gemini AI service not initialized');
     }
 
-    const prompt = `Analyze this voice note.
-
-Create a high-quality summary in FRENCH.
-
-If the audio is long (more than 1 minute), provide a minute-by-minute timeline.
-
-Extract key takeaways and action items.
-
-Format your response EXACTLY like this (keep the emojis and structure):
-
-RESUME :
-(One sentence synthesis of the entire message)
-
-CHRONOLOGIE :
-[0:00 - 1:00] : ...
-[1:00 - 2:00] : ...
-(Skip this section if audio is less than 1 minute)
-
-POINTS CLES :
-Point 1
-Point 2
-Point 3
-
-ACTIONS :
-Action item 1
-Action item 2
-(Skip this section if no action items)`;
+    const prompt = PROMPTS[type];
 
     const response = await this.ai.models.generateContent({
       model: 'gemini-2.0-flash',

@@ -12,17 +12,19 @@ export const helpCommand: Command = {
   async execute({ message, client }) {
     console.log('Command: !help');
 
-    const helpText = `*Available Commands*
+    const helpText = `*Commandes*
 
-${config.commandPrefix}ping - Health check
-${config.commandPrefix}help - Show this help message
+${config.commandPrefix}ping - Test de connexion
+${config.commandPrefix}help - Affiche cette aide
+${config.commandPrefix}details - Analyse approfondie du dernier vocal
 
-*Voice Messages*
-Send a voice note and I'll analyze it with AI, providing:
-- Summary
-- Timeline (if > 1 min)
-- Key points
-- Action items`;
+*Messages Vocaux*
+
+< 30s : Transcription
+30s - 2min : Resume court
+> 2min : Resume + points cles
+
+Pour les longs vocaux, tape *!details* apres pour obtenir chronologie + transcription complete.`;
 
     await client.sendMessage(message.from, helpText, { sendSeen: false });
     console.log('Help sent');

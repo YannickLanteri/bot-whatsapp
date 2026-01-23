@@ -1,9 +1,19 @@
 import type { MediaTypeHandler } from '../types';
-import { geminiService } from '../services/gemini';
+import { geminiService, DURATION_THRESHOLDS } from '../services/gemini';
+import { cacheService } from '../services/cache';
+
+/**
+ * Format duration in mm:ss
+ */
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
 /**
  * Voice message handler
- * Analyzes voice notes using Gemini AI
+ * Analyzes voice notes using Gemini AI with adaptive response based on duration
  */
 export const voiceHandler: MediaTypeHandler = {
   types: ['audio', 'ptt'],
@@ -21,29 +31,62 @@ export const voiceHandler: MediaTypeHandler = {
       return;
     }
 
-    await client.sendMessage(message.from, 'Analyzing...', { sendSeen: false });
+    // Get audio duration (whatsapp-web.js provides this for voice messages)
+    const duration = (message as any).duration || 0;
+    console.log(`Voice duration: ${duration}s`);
+
+    await client.sendMessage(message.from, 'Analyse en cours...', { sendSeen: false });
 
     const media = await message.downloadMedia();
     if (!media) {
-      await client.sendMessage(message.from, 'Failed to download audio', { sendSeen: false });
+      await client.sendMessage(message.from, 'Echec du telechargement', { sendSeen: false });
       return;
     }
 
     try {
-      const analysis = await geminiService.analyzeAudio(media.data, media.mimetype);
+      // Determine analysis type based on duration
+      const analysisType = geminiService.getAnalysisType(duration);
+      console.log(`Analysis type: ${analysisType} (duration: ${duration}s)`);
 
-      const formattedResponse = `*VOICE ANALYSIS*
+      // Cache voice data for potential !details request
+      cacheService.setVoice(message.from, {
+        audioData: media.data,
+        mimeType: media.mimetype,
+        duration,
+        timestamp: Date.now(),
+      });
+
+      // Perform analysis
+      const analysis = await geminiService.analyzeAudio(media.data, media.mimetype, analysisType);
+
+      // Format response based on type
+      let response: string;
+
+      if (analysisType === 'transcription') {
+        response = `*TRANSCRIPTION* (${formatDuration(duration)})
 
 ${analysis}`;
+      } else if (analysisType === 'short') {
+        response = `*ANALYSE VOCALE* (${formatDuration(duration)})
 
-      await client.sendMessage(message.from, formattedResponse, { sendSeen: false });
-      console.log('Analysis sent');
+${analysis}`;
+      } else {
+        // Full analysis - mention !details option
+        response = `*ANALYSE VOCALE* (${formatDuration(duration)})
+
+${analysis}
+
+_Tape *!details* pour une analyse approfondie_`;
+      }
+
+      await client.sendMessage(message.from, response, { sendSeen: false });
+      console.log(`Analysis sent (type: ${analysisType})`);
     } catch (error) {
       const err = error as Error;
       console.error('Gemini error:', err.message);
       await client.sendMessage(
         message.from,
-        'Error analyzing audio. Please try again.',
+        'Erreur lors de l\'analyse. Reessaie.',
         { sendSeen: false }
       );
     }
