@@ -80,7 +80,7 @@ src/
 - **Runtime**: Node.js 18+
 - **Language**: TypeScript
 - **WhatsApp**: whatsapp-web.js
-- **AI**: Google Gemini 2.0 Flash
+- **AI**: Google Gemini 3 Flash
 - **Testing**: Vitest
 
 ## License

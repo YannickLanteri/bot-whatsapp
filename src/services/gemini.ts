@@ -129,7 +129,7 @@ class GeminiService {
     const prompt = PROMPTS[type];
 
     const response = await this.ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3-flash-preview',
       contents: [
         { text: prompt },
         {
