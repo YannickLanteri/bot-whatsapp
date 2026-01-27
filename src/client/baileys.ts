@@ -27,7 +27,6 @@ export async function createBaileysClient(): Promise<WASocket> {
   sock = makeWASocket({
     auth: state,
     logger,
-    printQRInTerminal: true,
     browser: ['Bot WhatsApp', 'Chrome', '120.0.0'],
   });
 
@@ -45,9 +44,8 @@ export function setupConnectionHandler(socket: WASocket): void {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log('[QR] Scan the QR code above to connect');
-      // Fallback URL for QR
-      console.log(`[QR] Or use: https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`);
+      console.log('[QR] Scanne ce lien pour te connecter :');
+      console.log(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`);
     }
 
     if (connection === 'close') {
