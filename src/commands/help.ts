@@ -20,11 +20,16 @@ ${config.commandPrefix}details - Analyse approfondie du dernier vocal
 
 🎙️ *Messages Vocaux*
 
-< 30s : Transcription
-30s - 2min : Résumé court
-> 2min : Résumé + points clés
+Envoie un vocal et choisis :
+1️⃣ Transcription complète
+2️⃣ Résumé rapide
+3️⃣ Les deux
+4️⃣ Points d'action (todos)
 
-Pour les longs vocaux, tape *!details* après pour obtenir chronologie + transcription complète.`;
+📷 *Images* (bientôt)
+
+1️⃣ Scanner carte de visite
+2️⃣ Extraire le texte (OCR)`;
 
     await client.sendMessage(message.from, helpText);
     console.log('Help sent');
