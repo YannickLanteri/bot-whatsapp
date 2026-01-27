@@ -25,6 +25,7 @@ Envoie un vocal et choisis :
 2️⃣ Résumé rapide
 3️⃣ Les deux
 4️⃣ Points d'action (todos)
+5️⃣ Traduire (détection auto)
 
 📷 *Images* (bientôt)
 

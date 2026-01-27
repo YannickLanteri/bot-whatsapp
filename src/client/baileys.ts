@@ -211,9 +211,9 @@ export function setupMessageHandler(socket: WASocket): void {
       };
 
       try {
-        // Check for menu responses (1, 2, 3, 4)
+        // Check for menu responses (1, 2, 3, 4, 5)
         // Works even after first analysis if voice is still cached
-        if (textBody.match(/^[1-4]$/)) {
+        if (textBody.match(/^[1-5]$/)) {
           const { getUserState } = await import('../services/userState');
           const state = getUserState(jid);
           

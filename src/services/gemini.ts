@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { config } from '../config';
 
-export type AnalysisType = 'transcription' | 'short' | 'full' | 'details' | 'todos';
+export type AnalysisType = 'transcription' | 'short' | 'full' | 'details' | 'todos' | 'translate';
 
 /**
  * Duration thresholds in seconds
@@ -87,6 +87,24 @@ Format your response EXACTLY like this:
 • Things to not forget
 
 If no action items found, say "Aucune action identifiée dans ce message."`,
+
+  translate: `Listen to this voice note and:
+1. Detect the language spoken
+2. Transcribe it in the original language
+3. Translate it to French (if not already French) or to English (if already French)
+
+Format your response EXACTLY like this:
+
+*LANGUE DÉTECTÉE*
+[Language name]
+
+*TRANSCRIPTION ORIGINALE*
+[Word for word transcription in original language]
+
+*TRADUCTION*
+[Translation to French or English]
+
+If the audio is already in French, translate to English. Otherwise translate to French.`,
 };
 
 /**

@@ -61,6 +61,7 @@ Que veux-tu faire ?
 2️⃣ Résumé rapide
 3️⃣ Les deux (transcription + résumé)
 4️⃣ Points d'action (todos)
+5️⃣ Traduire (détection auto)
 
 _Réponds avec le numéro de ton choix_`;
 
@@ -86,7 +87,7 @@ export async function processVoiceChoice(
   }
 
   const { data, mimetype, duration } = state.cachedVoice;
-  let analysisType: 'transcription' | 'short' | 'full' | 'details' | 'todos';
+  let analysisType: 'transcription' | 'short' | 'full' | 'details' | 'todos' | 'translate';
   let responsePrefix: string;
 
   switch (choice) {
@@ -105,6 +106,10 @@ export async function processVoiceChoice(
     case '4':
       analysisType = 'todos';
       responsePrefix = '✅ *POINTS D\'ACTION*';
+      break;
+    case '5':
+      analysisType = 'translate';
+      responsePrefix = '🌍 *TRADUCTION*';
       break;
     default:
       return false;

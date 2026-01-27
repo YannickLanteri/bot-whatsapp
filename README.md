@@ -1,91 +1,104 @@
-# WhatsApp Gemini Voice Assistant
+# 🤖 Bot WhatsApp - Assistant Vocal IA
 
-![Banner](./banner.png)
+Un bot WhatsApp intelligent qui transforme vos messages vocaux en texte, résumés et actions. Propulsé par **Gemini AI** et **Baileys**.
 
-A WhatsApp bot built with **TypeScript**, **whatsapp-web.js**, and **Google Gemini AI**. Listens to voice notes, transcribes them, and provides smart summaries based on duration.
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new)
 
-## Features
+## ✨ Fonctionnalités
 
-- **Adaptive Analysis**: Response adapts to voice message duration
-  - < 30s: Transcription only
-  - 30s - 2min: Short summary + key points
-  - \> 2min: Full summary + `!details` option
-- **Smart Summaries**: Key takeaways, action items, and timeline for long messages
-- **Whitelist Security**: Only responds to specified phone numbers
-- **Modular Architecture**: Easy to add new commands and handlers
+### 🎙️ Messages Vocaux
+Envoyez un vocal et choisissez :
 
-## Commands
+| Option | Description |
+|--------|-------------|
+| 1️⃣ **Transcription** | Texte mot à mot |
+| 2️⃣ **Résumé** | Points clés condensés |
+| 3️⃣ **Les deux** | Transcription + Résumé |
+| 4️⃣ **Todos** | Extraction des actions à faire |
+| 5️⃣ **Traduire** | Détection langue + traduction FR/EN |
 
-| Command | Description |
-|---------|-------------|
-| `!ping` | Health check |
-| `!help` | Show available commands |
-| `!details` | Get detailed analysis of last voice message |
+### 🔄 Réanalyse
+Après une analyse, envoyez un autre numéro pour analyser le même vocal différemment !
 
-## Setup
+### 📷 Images (bientôt)
+- Scan de cartes de visite
+- OCR (extraction de texte)
 
-### Prerequisites
+## 🚀 Installation
+
+### Prérequis
 - Node.js 18+
-- WhatsApp account
-- [Google Gemini API Key](https://aistudio.google.com/)
+- Clé API Gemini ([Obtenir ici](https://aistudio.google.com/apikey))
 
-### Environment Variables
-
-Create a `.env` file:
-```env
-GEMINI_API_KEY=your_gemini_api_key
-WHITELISTED_NUMBERS=336xxxxxxxx,336yyyyyyyy
-```
-Numbers in international format without `+` (e.g., `33612345678` for France).
-
-### Installation
+### Local
 
 ```bash
+# Clone
+git clone https://github.com/YannickLanteri/bot-whatsapp.git
+cd bot-whatsapp
+
+# Install
 npm install
-npm run build
-npm start
+
+# Configure
+cp .env.example .env
+# Édite .env avec ta clé Gemini et numéros autorisés
+
+# Lance
+npm run dev:ts
+# Scanne le QR code avec WhatsApp > Appareils liés
 ```
 
-### Development
+### Railway (Production)
 
-```bash
-npm run dev:ts   # Run with hot reload
-npm test         # Run unit tests
-npm run test:coverage  # Run tests with coverage
-```
+1. Fork ce repo
+2. Crée un projet Railway et connecte ton repo
+3. Ajoute les variables d'environnement :
+   - `GEMINI_API_KEY` - Ta clé API Gemini
+   - `WHITELISTED_NUMBERS` - Numéros autorisés (ex: `33612345678,33698765432`)
+4. Ajoute un **Volume** : Mount path → `/app/auth_info_baileys`
+5. Deploy !
 
-## Project Structure
+## ⚙️ Configuration
+
+| Variable | Description | Exemple |
+|----------|-------------|---------|
+| `GEMINI_API_KEY` | Clé API Google Gemini | `AIza...` |
+| `WHITELISTED_NUMBERS` | Numéros autorisés (sans +) | `33612345678` |
+| `COMMAND_PREFIX` | Préfixe des commandes | `!` (défaut) |
+
+## 📝 Commandes
+
+| Commande | Description |
+|----------|-------------|
+| `!ping` | Test de connexion |
+| `!help` | Affiche l'aide |
+| `!details` | Analyse approfondie du dernier vocal |
+
+## 🏗️ Architecture
 
 ```
 src/
-├── index.ts              # Entry point
-├── types/                # TypeScript types
-├── config/               # Configuration & whitelist
-├── client/               # WhatsApp client setup
-├── commands/             # Bot commands (ping, help, details)
-├── handlers/             # Media handlers (voice)
-└── services/             # Gemini AI, cache, cleanup
+├── client/baileys.ts    # Client WhatsApp (Baileys)
+├── handlers/
+│   └── voice.ts         # Handler messages vocaux
+├── services/
+│   ├── gemini.ts        # Service IA Gemini
+│   └── userState.ts     # État utilisateur (cache vocal)
+└── commands/            # Commandes bot
 ```
 
-## Deployment (Railway)
+## 🛠️ Stack Technique
 
-1. Push to GitHub
-2. Create Railway project from repo
-3. Add environment variables in dashboard
-4. Check logs for QR code link
-5. Scan QR code once - session persists via volume
+- **[Baileys](https://github.com/WhiskeySockets/Baileys)** - Client WhatsApp léger (pas de navigateur)
+- **[Gemini AI](https://ai.google.dev/)** - Transcription et analyse IA
+- **TypeScript** - Typage fort
+- **Railway** - Déploiement facile
 
-## Tech Stack
+## 📄 Licence
 
-- **Runtime**: Node.js 18+
-- **Language**: TypeScript
-- **WhatsApp**: whatsapp-web.js
-- **AI**: Google Gemini 3 Flash
-- **Testing**: Vitest
-
-## License
-
-MIT
+MIT - Fais-en ce que tu veux !
 
 ---
-*Not affiliated with WhatsApp or Google. Use responsibly.*
+
+Made with ❤️ by [Yannick](https://github.com/YannickLanteri)
