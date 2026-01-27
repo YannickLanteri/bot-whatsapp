@@ -1,12 +1,39 @@
-import type { Message, Client } from 'whatsapp-web.js';
-
 /**
  * Context passed to command handlers
+ * Compatible with both whatsapp-web.js (legacy) and Baileys
  */
 export interface CommandContext {
-  message: Message;
-  client: Client;
+  message: BotMessage;
+  client: BotClient;
   args: string[];
+}
+
+/**
+ * Abstracted message interface (works with Baileys)
+ */
+export interface BotMessage {
+  /** Sender JID (e.g., 33612345678@s.whatsapp.net) */
+  from: string;
+  /** Text content of the message */
+  body: string;
+  /** Message type (conversation, audioMessage, imageMessage, etc.) */
+  type: string;
+  /** Whether message contains media */
+  hasMedia: boolean;
+  /** Duration in seconds (for audio messages) */
+  duration?: number;
+  /** Download media function */
+  downloadMedia: () => Promise<{ data: string; mimetype: string } | null>;
+  /** Raw message object for advanced usage */
+  _raw?: any;
+}
+
+/**
+ * Abstracted client interface (works with Baileys)
+ */
+export interface BotClient {
+  /** Send a text message */
+  sendMessage: (to: string, content: string) => Promise<void>;
 }
 
 /**
@@ -55,7 +82,7 @@ export interface BotConfig {
   commandPrefix: string;
   /** Node environment */
   nodeEnv: string;
-  /** Puppeteer executable path */
+  /** Puppeteer executable path (legacy, not used with Baileys) */
   puppeteerPath?: string;
   /** Auth data path */
   authPath: string;

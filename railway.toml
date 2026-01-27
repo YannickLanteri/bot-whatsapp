@@ -4,6 +4,7 @@ builder = "dockerfile"
 [deploy]
 restartPolicyType = "always"
 
+# Auth persistence for Baileys
 [[mounts]]
-source = "wwebjs_auth"
-destination = "/app/.wwebjs_auth"
+source = "baileys_auth"
+destination = "/app/auth_info_baileys"

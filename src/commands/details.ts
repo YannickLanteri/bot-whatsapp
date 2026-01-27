@@ -17,8 +17,7 @@ export const detailsCommand: Command = {
     if (!geminiService.isAvailable()) {
       await client.sendMessage(
         message.from,
-        'Service d\'analyse non disponible.',
-        { sendSeen: false }
+        '❌ Service d\'analyse non disponible.'
       );
       return;
     }
@@ -28,13 +27,12 @@ export const detailsCommand: Command = {
     if (!cached) {
       await client.sendMessage(
         message.from,
-        'Aucun vocal en memoire. Envoie un vocal d\'abord.',
-        { sendSeen: false }
+        '⚠️ Aucun vocal en mémoire. Envoie un vocal d\'abord.'
       );
       return;
     }
 
-    await client.sendMessage(message.from, 'Analyse detaillee en cours...', { sendSeen: false });
+    await client.sendMessage(message.from, '🔍 Analyse détaillée en cours...');
 
     try {
       const analysis = await geminiService.analyzeAudio(
@@ -43,19 +41,18 @@ export const detailsCommand: Command = {
         'details'
       );
 
-      const response = `*ANALYSE DETAILLEE*
+      const response = `📋 *ANALYSE DÉTAILLÉE*
 
 ${analysis}`;
 
-      await client.sendMessage(message.from, response, { sendSeen: false });
+      await client.sendMessage(message.from, response);
       console.log('Detailed analysis sent');
     } catch (error) {
       const err = error as Error;
       console.error('Gemini error:', err.message);
       await client.sendMessage(
         message.from,
-        'Erreur lors de l\'analyse. Reessaie.',
-        { sendSeen: false }
+        '❌ Erreur lors de l\'analyse. Réessaie.'
       );
     }
   },

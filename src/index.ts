@@ -1,7 +1,6 @@
 import { config, validateConfig } from './config';
-import { cleanupChromiumLocks } from './services/cleanup';
 import { geminiService } from './services/gemini';
-import { createWhatsAppClient, setupEventHandlers, setupShutdown } from './client/whatsapp';
+import { createBaileysClient, setupConnectionHandler, setupMessageHandler, shutdown } from './client/baileys';
 
 /**
  * Main entry point
@@ -16,14 +15,11 @@ async function main(): Promise<void> {
   // Initialize services
   geminiService.initialize();
 
-  // Cleanup Chromium locks (prevents "Profile in use" errors)
-  console.log('Cleaning up Chromium locks...');
-  cleanupChromiumLocks(config.authPath);
-
-  // Create and configure WhatsApp client
-  const client = createWhatsAppClient();
-  setupEventHandlers(client);
-  setupShutdown(client);
+  // Create and configure Baileys client
+  console.log('Initializing WhatsApp client (Baileys)...');
+  const sock = await createBaileysClient();
+  setupConnectionHandler(sock);
+  setupMessageHandler(sock);
 
   // Handle unhandled errors
   process.on('unhandledRejection', (reason) => {
@@ -34,9 +30,17 @@ async function main(): Promise<void> {
     console.error('[ERROR] Uncaught exception:', error.message);
   });
 
-  // Start the bot
-  console.log('Initializing WhatsApp client...');
-  await client.initialize();
+  // Graceful shutdown
+  const gracefulShutdown = async (signal: string) => {
+    console.log(`[SYS] ${signal} received. Shutting down...`);
+    await shutdown();
+    process.exit(0);
+  };
+
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+  console.log('[BOT] Waiting for QR code or auto-reconnect...');
 }
 
 main().catch((error) => {

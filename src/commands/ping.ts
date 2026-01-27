@@ -10,7 +10,7 @@ export const pingCommand: Command = {
 
   async execute({ message, client }) {
     console.log('Command: !ping');
-    await client.sendMessage(message.from, 'pong', { sendSeen: true });
+    await client.sendMessage(message.from, '🏓 pong');
     console.log('Pong sent');
   },
 };

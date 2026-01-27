@@ -9,9 +9,12 @@ dist/
 .env.local
 .env.*.local
 
-# WhatsApp session data
+# WhatsApp session data (legacy whatsapp-web.js)
 .wwebjs_auth/
 .wwebjs_cache/
+
+# Baileys auth data
+auth_info_baileys/
 
 # OS files
 .DS_Store

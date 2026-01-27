@@ -21,15 +21,29 @@ export const config: BotConfig = {
   whitelistedNumbers: parseWhitelistedNumbers(),
   commandPrefix: process.env.COMMAND_PREFIX || '!',
   nodeEnv: process.env.NODE_ENV || 'development',
-  puppeteerPath: process.env.PUPPETEER_EXECUTABLE_PATH,
-  authPath: path.join(process.cwd(), '.wwebjs_auth'),
+  puppeteerPath: process.env.PUPPETEER_EXECUTABLE_PATH, // Legacy, not used with Baileys
+  authPath: path.join(process.cwd(), 'auth_info_baileys'),
 };
 
 /**
  * Check if a phone number is whitelisted
+ * Baileys uses format: 33612345678@s.whatsapp.net
+ * whatsapp-web.js used: 33612345678@c.us
  */
 export function isWhitelisted(from: string): boolean {
-  return config.whitelistedNumbers.some(num => from === `${num}@c.us`);
+  // If no whitelist configured, allow all
+  if (config.whitelistedNumbers.length === 0) {
+    return true;
+  }
+  
+  // Extract number from JID (works with both @s.whatsapp.net and @c.us)
+  const number = from.split('@')[0];
+  
+  return config.whitelistedNumbers.some(num => {
+    // Remove any + prefix for comparison
+    const cleanNum = num.replace(/^\+/, '');
+    return number === cleanNum || number === num;
+  });
 }
 
 /**
@@ -41,6 +55,6 @@ export function validateConfig(): void {
   }
 
   if (config.whitelistedNumbers.length === 0) {
-    console.warn('Warning: No whitelisted numbers configured. Bot will ignore all messages.');
+    console.warn('Warning: No whitelisted numbers configured. Bot will respond to everyone.');
   }
 }
