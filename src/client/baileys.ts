@@ -142,11 +142,16 @@ export function setupMessageHandler(socket: WASocket): void {
     for (const msg of messages) {
       if (!msg.message) continue;
 
+      // Get JID - Baileys v7 uses LID format, remoteJidAlt has real phone number
       const jid = msg.key.remoteJid;
+      const jidAlt = (msg.key as any).remoteJidAlt; // Real phone number if available
+      
       if (!jid || jid === 'status@broadcast') continue;
       if (msg.key.fromMe) continue;
 
-      const senderNumber = getSenderNumber(jid);
+      // Use alternative JID (real phone) if available, otherwise use primary JID
+      const effectiveJid = jidAlt || jid;
+      const senderNumber = getSenderNumber(effectiveJid);
       const messageContent = msg.message;
       const contentType = getContentType(messageContent);
 
@@ -159,9 +164,11 @@ export function setupMessageHandler(socket: WASocket): void {
       }
 
       const preview = textBody.substring(0, 50);
-      console.log(`[MSG] ${senderNumber}: "${preview}${textBody.length > 50 ? '...' : ''}" (${contentType})`);
+      // Log both JIDs for debugging
+      const jidInfo = jidAlt ? `${senderNumber} (LID: ${getSenderNumber(jid)})` : senderNumber;
+      console.log(`[MSG] ${jidInfo}: "${preview}${textBody.length > 50 ? '...' : ''}" (${contentType})`);
 
-      if (!isWhitelisted(jid)) {
+      if (!isWhitelisted(effectiveJid)) {
         console.log('[MSG] Not whitelisted, ignoring');
         continue;
       }
@@ -179,6 +186,7 @@ export function setupMessageHandler(socket: WASocket): void {
       }
 
       // Create abstracted message
+      // Use original JID for sending replies (Baileys needs it)
       const botMessage: BotMessage = {
         from: jid,
         body: textBody,
