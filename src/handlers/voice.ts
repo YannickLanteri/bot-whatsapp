@@ -71,6 +71,7 @@ _Réponds avec le numéro de ton choix_`;
 
 /**
  * Process user's voice menu choice
+ * Works even after first analysis - can analyze same vocal multiple times
  */
 export async function processVoiceChoice(
   jid: string,
@@ -79,7 +80,8 @@ export async function processVoiceChoice(
 ): Promise<boolean> {
   const state = getUserState(jid);
   
-  if (state.pendingAction !== 'voice_menu' || !state.cachedVoice) {
+  // Allow analysis if there's a cached voice (even after first choice)
+  if (!state.cachedVoice) {
     return false;
   }
 
@@ -114,7 +116,16 @@ export async function processVoiceChoice(
     const analysis = await geminiService.analyzeAudio(data, mimetype, analysisType);
     
     const durationStr = duration ? ` (${formatDuration(duration)})` : '';
-    await sendMessage(jid, `${responsePrefix}${durationStr}\n\n${analysis}`);
+    const response = `${responsePrefix}${durationStr}
+
+${analysis}
+
+_Envoie 1/2/3/4 pour une autre analyse du même vocal_`;
+    
+    await sendMessage(jid, response);
+    
+    // Clear pending action but KEEP cached voice for re-analysis
+    setUserState(jid, { pendingAction: null });
     
     console.log(`Voice analysis sent (type: ${analysisType})`);
   } catch (error) {

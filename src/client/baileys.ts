@@ -211,23 +211,21 @@ export function setupMessageHandler(socket: WASocket): void {
       };
 
       try {
-        // Check for pending menu actions (1, 2, 3, 4 responses)
+        // Check for menu responses (1, 2, 3, 4)
+        // Works even after first analysis if voice is still cached
         if (textBody.match(/^[1-4]$/)) {
-          const { hasPendingAction, getPendingAction, clearUserState } = await import('../services/userState');
+          const { getUserState } = await import('../services/userState');
+          const state = getUserState(jid);
           
-          if (hasPendingAction(jid)) {
-            const pendingAction = getPendingAction(jid);
-            
-            if (pendingAction === 'voice_menu') {
-              const { processVoiceChoice } = await import('../handlers/voice');
-              const handled = await processVoiceChoice(jid, textBody, botClient.sendMessage);
-              if (handled) {
-                clearUserState(jid);
-                continue;
-              }
+          // Check if there's a cached voice to analyze
+          if (state.cachedVoice) {
+            const { processVoiceChoice } = await import('../handlers/voice');
+            const handled = await processVoiceChoice(jid, textBody, botClient.sendMessage);
+            if (handled) {
+              continue;
             }
-            // Future: handle image_menu, contact_confirm here
           }
+          // Future: check for cachedImage for image menu
         }
 
         // Check for commands
