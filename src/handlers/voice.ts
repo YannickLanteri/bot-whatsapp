@@ -1,6 +1,6 @@
 import type { MediaTypeHandler } from '../types';
-import { geminiService, DURATION_THRESHOLDS } from '../services/gemini';
-import { cacheService } from '../services/cache';
+import { geminiService } from '../services/gemini';
+import { setUserState, getUserState } from '../services/userState';
 
 /**
  * Format duration in mm:ss
@@ -13,11 +13,11 @@ function formatDuration(seconds: number): string {
 
 /**
  * Voice message handler
- * Analyzes voice notes using Gemini AI with adaptive response based on duration
+ * Shows interactive menu for user to choose action
  */
 export const voiceHandler: MediaTypeHandler = {
   types: ['audio', 'ptt'],
-  description: 'Analyze voice messages with AI',
+  description: 'Handle voice messages with interactive menu',
 
   async execute({ message, client }) {
     console.log('Processing voice message...');
@@ -25,69 +25,102 @@ export const voiceHandler: MediaTypeHandler = {
     if (!geminiService.isAvailable()) {
       await client.sendMessage(
         message.from,
-        'Voice analysis is not configured. Please set GEMINI_API_KEY.'
+        '❌ Service non configuré. Contacte l\'admin.'
       );
       return;
     }
 
-    // Get audio duration (works with both whatsapp-web.js and Baileys adapter)
+    // Get audio duration
     const duration = (message as any).duration || 0;
     console.log(`Voice duration: ${duration}s`);
 
-    await client.sendMessage(message.from, '🎙️ Analyse en cours...');
-
-    // Download media - compatible with our Baileys adapter
+    // Download and cache the media
     const media = await message.downloadMedia();
     if (!media) {
-      await client.sendMessage(message.from, '❌ Echec du téléchargement');
+      await client.sendMessage(message.from, '❌ Échec du téléchargement');
       return;
     }
 
-    try {
-      // Determine analysis type based on duration
-      const analysisType = geminiService.getAnalysisType(duration);
-      console.log(`Analysis type: ${analysisType} (duration: ${duration}s)`);
-
-      // Cache voice data for potential !details request
-      cacheService.setVoice(message.from, {
-        audioData: media.data,
-        mimeType: media.mimetype,
+    // Cache the voice message and set pending action
+    setUserState(message.from, {
+      pendingAction: 'voice_menu',
+      cachedVoice: {
+        data: media.data,
+        mimetype: media.mimetype,
         duration,
         timestamp: Date.now(),
-      });
+      },
+    });
 
-      // Perform analysis
-      const analysis = await geminiService.analyzeAudio(media.data, media.mimetype, analysisType);
+    // Send interactive menu
+    const menu = `🎙️ *Vocal reçu* (${formatDuration(duration)})
 
-      // Format response based on type
-      let response: string;
+Que veux-tu faire ?
 
-      if (analysisType === 'transcription') {
-        response = `📝 *TRANSCRIPTION* (${formatDuration(duration)})
+1️⃣ Transcription complète
+2️⃣ Résumé rapide
+3️⃣ Les deux (transcription + résumé)
+4️⃣ Points d'action (todos)
 
-${analysis}`;
-      } else if (analysisType === 'short') {
-        response = `🎯 *ANALYSE VOCALE* (${formatDuration(duration)})
+_Réponds avec le numéro de ton choix_`;
 
-${analysis}`;
-      } else {
-        // Full analysis - mention !details option
-        response = `🎯 *ANALYSE VOCALE* (${formatDuration(duration)})
-
-${analysis}
-
-_Tape *!details* pour une analyse approfondie_`;
-      }
-
-      await client.sendMessage(message.from, response);
-      console.log(`Analysis sent (type: ${analysisType})`);
-    } catch (error) {
-      const err = error as Error;
-      console.error('Gemini error:', err.message);
-      await client.sendMessage(
-        message.from,
-        '❌ Erreur lors de l\'analyse. Réessaie.'
-      );
-    }
+    await client.sendMessage(message.from, menu);
+    console.log('Voice menu sent, waiting for user choice');
   },
 };
+
+/**
+ * Process user's voice menu choice
+ */
+export async function processVoiceChoice(
+  jid: string,
+  choice: string,
+  sendMessage: (to: string, content: string) => Promise<void>
+): Promise<boolean> {
+  const state = getUserState(jid);
+  
+  if (state.pendingAction !== 'voice_menu' || !state.cachedVoice) {
+    return false;
+  }
+
+  const { data, mimetype, duration } = state.cachedVoice;
+  let analysisType: 'transcription' | 'short' | 'full' | 'details' | 'todos';
+  let responsePrefix: string;
+
+  switch (choice) {
+    case '1':
+      analysisType = 'transcription';
+      responsePrefix = '📝 *TRANSCRIPTION*';
+      break;
+    case '2':
+      analysisType = 'short';
+      responsePrefix = '📋 *RÉSUMÉ*';
+      break;
+    case '3':
+      analysisType = 'full';
+      responsePrefix = '📝 *TRANSCRIPTION + RÉSUMÉ*';
+      break;
+    case '4':
+      analysisType = 'todos';
+      responsePrefix = '✅ *POINTS D\'ACTION*';
+      break;
+    default:
+      return false;
+  }
+
+  await sendMessage(jid, '⏳ Analyse en cours...');
+
+  try {
+    const analysis = await geminiService.analyzeAudio(data, mimetype, analysisType);
+    
+    const durationStr = duration ? ` (${formatDuration(duration)})` : '';
+    await sendMessage(jid, `${responsePrefix}${durationStr}\n\n${analysis}`);
+    
+    console.log(`Voice analysis sent (type: ${analysisType})`);
+  } catch (error) {
+    console.error('Gemini error:', (error as Error).message);
+    await sendMessage(jid, '❌ Erreur lors de l\'analyse. Réessaie.');
+  }
+
+  return true;
+}

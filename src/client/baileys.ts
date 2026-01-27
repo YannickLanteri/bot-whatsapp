@@ -211,6 +211,25 @@ export function setupMessageHandler(socket: WASocket): void {
       };
 
       try {
+        // Check for pending menu actions (1, 2, 3, 4 responses)
+        if (textBody.match(/^[1-4]$/)) {
+          const { hasPendingAction, getPendingAction, clearUserState } = await import('../services/userState');
+          
+          if (hasPendingAction(jid)) {
+            const pendingAction = getPendingAction(jid);
+            
+            if (pendingAction === 'voice_menu') {
+              const { processVoiceChoice } = await import('../handlers/voice');
+              const handled = await processVoiceChoice(jid, textBody, botClient.sendMessage);
+              if (handled) {
+                clearUserState(jid);
+                continue;
+              }
+            }
+            // Future: handle image_menu, contact_confirm here
+          }
+        }
+
         // Check for commands
         if (textBody.startsWith(config.commandPrefix)) {
           const parts = textBody.slice(config.commandPrefix.length).trim().split(/\s+/);

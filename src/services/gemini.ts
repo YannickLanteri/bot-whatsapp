@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { config } from '../config';
 
-export type AnalysisType = 'transcription' | 'short' | 'full' | 'details';
+export type AnalysisType = 'transcription' | 'short' | 'full' | 'details' | 'todos';
 
 /**
  * Duration thresholds in seconds
@@ -30,24 +30,20 @@ Format your response EXACTLY like this:
 • Point 3
 (maximum 3-4 points)`,
 
-  full: `Analyze this voice note and create a summary in FRENCH.
+  full: `Analyze this voice note in FRENCH.
 
-Format your response EXACTLY like this:
+Provide BOTH transcription and summary:
+
+*TRANSCRIPTION*
+(Word for word transcription)
 
 *RESUME*
-(One clear sentence summarizing the entire message)
+(2-3 sentences summarizing the key message)
 
 *POINTS CLES*
 • Point 1
 • Point 2
-• Point 3
-
-*ACTIONS*
-• Action 1
-• Action 2
-(Skip this section if no action items)
-
-Keep it concise. User can request more details with !details command.`,
+• Point 3`,
 
   details: `Analyze this voice note IN DEPTH in FRENCH.
 
@@ -74,6 +70,23 @@ Format your response EXACTLY like this:
 
 *TRANSCRIPTION*
 (Full word-for-word transcription)`,
+
+  todos: `Extract ALL action items, tasks, and things to do from this voice note.
+Respond in FRENCH.
+
+Format your response EXACTLY like this:
+
+*ACTIONS À FAIRE*
+☐ Action 1 - deadline if mentioned
+☐ Action 2 - who should do it if mentioned
+☐ Action 3
+(List ALL todos, tasks, reminders, things to do, follow-ups)
+
+*RAPPELS*
+• Any important dates or deadlines mentioned
+• Things to not forget
+
+If no action items found, say "Aucune action identifiée dans ce message."`,
 };
 
 /**
